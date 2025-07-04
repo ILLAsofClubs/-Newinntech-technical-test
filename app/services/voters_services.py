@@ -1,10 +1,12 @@
 from typing import Optional
 
 from app.config.env import MONGODB_CONNECTION_STRING, DB_NAME
-from app.models.voters import Voter, CreateVoter, VoterInfo, VoterList
+from app.models.voters import Voter, VoterCreate, VoterInfo, VoterList
 from app.database.mongo_connection import database
 
-def register_voter(new_voter: CreateVoter) -> Voter:
+from bson import ObjectId
+
+def register_voter(new_voter: VoterCreate) -> Voter:
     """
     Create a new voter in the database and return the voter information.
     """
@@ -60,9 +62,8 @@ def get_all_voters() -> VoterList:
         raise Exception(f"Failed to retrieve voters: {e}")
 
     voter_list = VoterList(
-        voters=[VoterInfo(id=str(voter['id']), name=voter['name'], email=voter['email']) for voter in voters]
+        voters=[VoterInfo(id=str(voter['_id']), name=voter['name'], email=voter['email']) for voter in voters]
     )
-
     return voter_list
 
 def get_voter_by_id(voter_id: str) -> Voter:
@@ -72,11 +73,14 @@ def get_voter_by_id(voter_id: str) -> Voter:
     try:
         voter = database.find_one_document(
             collection=database.voters,
-            query={"_id": voter_id}
+            query={"_id": ObjectId(voter_id)}
         )
     except Exception as e:
         raise Exception(f"Failed to retrieve voter: {e}")
     
+    if not voter:
+        raise ValueError("voter not found.")
+        
     voter_info = Voter(
         id=str(voter['_id']),
         name=voter['name'],
@@ -91,12 +95,12 @@ def delete_voter(voter_id: Optional[str] = None, cc: Optional[int] = None) -> bo
     """
     Delete a voter by their ID or CC
     """
-    if not voter_id or not cc:
+    if not voter_id and not cc:
         raise ValueError("Either voter_id or cc must be provided.")
 
     query = {}
     if voter_id:
-        query["_id"] = voter_id
+        query["_id"] = ObjectId(voter_id)
     if cc:
         query["cc"] = cc
 

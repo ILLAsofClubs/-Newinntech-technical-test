@@ -4,6 +4,8 @@ from app.models.voters import Voter
 from app.models.candidates import Candidate
 from app.models.vote import Vote, RegisterVote, TotalVotesPerCandidate, VoteStatistics
 
+from bson import ObjectId
+
 from app.database.mongo_connection import database
 
 def register_vote(vote_data: RegisterVote) -> Vote:
@@ -14,7 +16,7 @@ def register_vote(vote_data: RegisterVote) -> Vote:
     # check if the voter exists
     voter = database.find_one_document(
         collection=database.voters,
-        query={"_id": vote_data.voter_id}
+        query={"_id": ObjectId(vote_data.voter_id)}
     )
 
     if not voter:
@@ -23,7 +25,7 @@ def register_vote(vote_data: RegisterVote) -> Vote:
     # check if the candidate exists
     candidate = database.find_one_document(
         collection=database.candidates,
-        query={"_id": vote_data.candidate_id}
+        query={"_id": ObjectId(vote_data.candidate_id)}
     )
 
     if not candidate:
@@ -58,7 +60,7 @@ def register_vote(vote_data: RegisterVote) -> Vote:
     try:
         # update the voter's has_voted status
         database.voters.update_one(
-            {"_id": vote_data.voter_id},
+            {"_id": ObjectId(vote_data.voter_id)},
             {"$set": {"has_voted": True}}
         )
     except Exception as e:
@@ -67,7 +69,7 @@ def register_vote(vote_data: RegisterVote) -> Vote:
     try:
         # update the candidate's votes count
         database.candidates.update_one(
-            {"_id": vote_data.candidate_id},
+            {"_id": ObjectId(vote_data.candidate_id)},
             {"$inc": {"votes": 1}}
         )
     except Exception as e:
@@ -87,8 +89,9 @@ def get_all_votes() -> List[Vote]:
         ))
     except Exception as e:
         raise Exception(f"Failed to retrieve votes: {e}")
-    
-    return [Vote(**vote) for vote in votes]
+
+
+    return [Vote(voter_id=vote["voter_id"], candidate_id=vote["candidate_id"] ) for vote in votes]
 
 def get_votes_statistics() -> VoteStatistics:
     """
@@ -125,9 +128,13 @@ def get_votes_statistics() -> VoteStatistics:
             )
         )
     
+    total_voters = list(database.find_all_documents(collection=database.voters))
+    
     votes_statistics = VoteStatistics(
         total_votes_per_candidate=total_votes_per_candidate,
-        total_voters=len(database.find_all_documents(collection=database.voters))
+        total_voters=len(total_voters)
     )
+
+    return votes_statistics
 
 

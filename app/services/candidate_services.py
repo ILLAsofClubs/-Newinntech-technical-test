@@ -4,6 +4,8 @@ from app.config.env import MONGODB_CONNECTION_STRING, DB_NAME
 from app.models.candidates import Candidate, CreateCandidate, CandidateInfo, CandidateList
 from app.database.mongo_connection import database
 
+from bson import ObjectId
+
 def register_candidate(new_candidate: CreateCandidate) -> Candidate:
     """
     Create a new candidate in the database and return the candidate information.
@@ -59,8 +61,19 @@ def get_all_candidates() -> CandidateList:
     except Exception as e:
         raise Exception(f"Failed to retrieve candidates: {e}")
 
+    candidates_info = []
+    for candidate in candidates:
+        candidates_info.append(
+            CandidateInfo(
+                id=str(candidate['_id']),
+                name=candidate['name'],
+                party=candidate['party'],
+
+            )
+        )
+    
     candidate_list = CandidateList(
-        candidates=[CandidateInfo(id=str(candidate['id']), name=candidate['name'], party=candidate['party']) for candidate in candidates]
+        candidates=candidates_info
     )
 
     return candidate_list
@@ -72,8 +85,9 @@ def get_candidate_by_id(candidate_id: str) -> Candidate:
     try:
         candidate = database.find_one_document(
             collection=database.candidates,
-            query={"_id": candidate_id}
+            query={"_id": ObjectId(candidate_id)}
         )
+        print(candidate)
     except Exception as e:
         raise Exception(f"Failed to retrieve candidate: {e}")
     
@@ -91,17 +105,18 @@ def delete_candidate(candidate_id: Optional[str] = None, cc: Optional[int] = Non
     """
     Delete a candidate by their ID or CC
     """
-    if not candidate_id or not cc:
+    if not candidate_id and not cc:
         raise ValueError("Either candidate_id or cc must be provided.")
 
     query = {}
     if candidate_id:
-        query["_id"] = candidate_id
+        query["_id"] = ObjectId(candidate_id)
     if cc:
         query["cc"] = cc
 
     try:
         result = database.candidates.delete_one(query)
+        print(result)
     except Exception as e:
         raise Exception(f"Failed to delete candidate: {e}")
 

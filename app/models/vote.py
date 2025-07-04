@@ -10,7 +10,7 @@ class RegisterVote(BaseModel):
     candidate_id: str = Field(..., description="ID of the candidate who is receiving the vote")
 
 class VoteList(BaseModel):
-    votes = List[Vote] = Field(..., description="list of votes cast in the election")
+    votes: List[Vote] = Field(..., description="list of votes cast in the election")
 
 class TotalVotesPerCandidate(BaseModel):
     candidate_id: str = Field(..., description="ID of the candidate for whom the total votes are being counted")
