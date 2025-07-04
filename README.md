@@ -9,8 +9,8 @@
 ### 1. Clona el repositorio
 
 ```bash
-git clone https://github.com/tu-usuario/tu-proyecto.git
-cd tu-proyecto
+git clone https://github.com/ILLAsofClubs/-Newinntech-technical-test.git
+cd -Newinntech-technical-test
 ```
 
 ### 2. Crea y activa un entorno virtual
