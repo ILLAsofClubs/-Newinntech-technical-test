@@ -11,6 +11,7 @@ def register_candidate(new_candidate: CreateCandidate) -> Candidate:
 
     candidate_obj = Candidate(
         name=new_candidate.name.lower(),
+        cc=new_candidate.cc,
         party=new_candidate.party
     )
 
@@ -43,7 +44,7 @@ def register_candidate(new_candidate: CreateCandidate) -> Candidate:
         raise Exception(f"Failed to register candidate: {e}")
     
     # Add the ID to the candidate object
-    candidate_obj.id = str(result.inserted_id)
+    candidate_obj.id = result.get("id")
 
     return candidate_obj
 
